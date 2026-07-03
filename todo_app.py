@@ -1,59 +1,47 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+import customtkinter as ctk
+from tkinter import messagebox
 import datetime
 import json
 import os
 
-class CuteTodoApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("🎀 투두리스트")
-        self.root.geometry("450x650")
-        
-        # 색상 테마 설정
-        self.bg_color = "#FFF0F5"
-        self.todo_color = "#FFB6C1"
-        self.acc_color = "#D8BFD8"
-        self.text_color = "#555555"
-        
-        self.root.configure(bg=self.bg_color)
+# 🎀 둥글둥글 귀여운 모던 테마 설정 🎀
+ctk.set_appearance_mode("light")
+
+class CuteTodoApp(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("🎀 큐트 투두 & 비밀수첩")
+        self.geometry("450x720")
+        self.configure(fg_color="#FFF0F5") # 전체 딸기우유빛 배경
         
         self.tasks = []
         self.accounts = []
-        
-        self.font_main = ("Malgun Gothic", 11)
-        
-        # 탭 스타일(ttk) 설정
-        style = ttk.Style()
-        style.theme_use('default')
-        style.configure('TNotebook', background=self.bg_color, borderwidth=0)
-        style.configure('TNotebook.Tab', font=("Malgun Gothic", 11, "bold"), padding=[20, 5], background="#FFE4E1", foreground="#888888")
-        style.map('TNotebook.Tab', 
-                  background=[('selected', '#FF69B4')], 
-                  foreground=[('selected', 'white')])
-        
-        style.configure("Treeview", font=("Malgun Gothic", 10), rowheight=30, borderwidth=0)
-        style.configure("Treeview.Heading", font=("Malgun Gothic", 10, "bold"), background="#FFE4E1", foreground=self.text_color)
-        style.map('Treeview', background=[('selected', '#FFC0CB')])
-
-        self.notebook = ttk.Notebook(root)
-        self.notebook.pack(fill="both", expand=True, padx=20, pady=20)
-
-        # 탭 프레임 생성
-        self.tab_todo = tk.Frame(self.notebook, bg="white", padx=15, pady=15)
-        self.tab_account = tk.Frame(self.notebook, bg="white", padx=15, pady=15)
-
-        self.notebook.add(self.tab_todo, text="🐰 할 일")
-        self.notebook.add(self.tab_account, text="🔐 비밀 수첩")
-
         self.data_file = "cute_todo_data.json"
-        self.load_data()
+        
+        # 폰트 설정
+        self.font_main = ("Malgun Gothic", 13)
+        self.font_bold = ("Malgun Gothic", 14, "bold")
+        
+        # 푹신푹신한 탭 뷰 생성 (둥근 모서리!)
+        self.tabview = ctk.CTkTabview(self, 
+                                      fg_color="#FFE4E1",
+                                      segmented_button_fg_color="#FFC0CB",
+                                      segmented_button_selected_color="#FF69B4",
+                                      segmented_button_selected_hover_color="#FF1493",
+                                      segmented_button_unselected_color="#FFC0CB",
+                                      segmented_button_unselected_hover_color="#FFB6C1",
+                                      text_color="white", corner_radius=15)
+        self.tabview.pack(padx=20, pady=20, fill="both", expand=True)
 
+        self.tab_todo = self.tabview.add("🐰 할 일")
+        self.tab_account = self.tabview.add("🔐 비밀 수첩")
+
+        self.load_data()
         self.setup_todo_tab()
         self.setup_account_tab()
         
-        self.update_task_listbox()
-        self.update_account_tree()
+        self.update_task_list()
+        self.update_account_list()
         
         self.check_alarms()
 
@@ -71,10 +59,9 @@ class CuteTodoApp:
                     for t in raw_tasks:
                         try:
                             due_time = datetime.datetime.strptime(t["due"], "%Y-%m-%d %H:%M")
-                            task_id = t.get("id", due_time.timestamp()) 
+                            task_id = t.get("id", due_time.timestamp())
                             task_date = datetime.datetime.fromtimestamp(task_id).date()
                             
-                            # '오늘' 데이터만 유지 (어제 데이터는 자동 폐기)
                             if task_date == today:
                                 self.tasks.append({
                                     "task": t["task"],
@@ -86,7 +73,7 @@ class CuteTodoApp:
                         except ValueError:
                             pass
             except Exception as e:
-                print(f"데이터 로드 중 에러 발생: {e}")
+                print(f"데이터 불러오기 에러: {e}")
 
     def save_data(self):
         data = {
@@ -103,97 +90,58 @@ class CuteTodoApp:
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"데이터 저장 중 에러 발생: {e}")
+            print(f"데이터 저장 에러: {e}")
 
     def setup_todo_tab(self):
-        tk.Label(self.tab_todo, text="✨ 무엇을 할까요?", font=self.font_main, bg="white", fg=self.text_color).pack(anchor="w")
-        self.task_entry = tk.Entry(self.tab_todo, font=self.font_main, relief="solid", bd=1)
-        self.task_entry.pack(fill="x", pady=(5, 15), ipady=5)
+        # 둥근 텍스트 입력창
+        ctk.CTkLabel(self.tab_todo, text="✨ 무엇을 할까요?", font=self.font_bold, text_color="#FF69B4").pack(anchor="w", pady=(10, 2))
+        self.task_entry = ctk.CTkEntry(self.tab_todo, font=self.font_main, fg_color="white", border_color="#FFB6C1", text_color="#555555", corner_radius=10, height=38)
+        self.task_entry.pack(fill="x", pady=(0, 10))
         
-        tk.Label(self.tab_todo, text="⏰ 언제 알려줄까요?", font=self.font_main, bg="white", fg=self.text_color).pack(anchor="w")
-        self.time_entry = tk.Entry(self.tab_todo, font=self.font_main, relief="solid", bd=1)
-        self.time_entry.pack(fill="x", pady=(5, 5), ipady=5)
+        ctk.CTkLabel(self.tab_todo, text="⏰ 언제 알려줄까요?", font=self.font_bold, text_color="#FF69B4").pack(anchor="w", pady=(5, 2))
+        self.time_entry = ctk.CTkEntry(self.tab_todo, font=self.font_main, fg_color="white", border_color="#FFB6C1", text_color="#555555", corner_radius=10, height=38)
+        self.time_entry.pack(fill="x", pady=(0, 2))
         
         now = datetime.datetime.now() + datetime.timedelta(minutes=1)
         self.time_entry.insert(0, now.strftime("%Y-%m-%d %H:%M"))
-        tk.Label(self.tab_todo, text="(형식: 2026-07-03 12:30)", font=("Malgun Gothic", 9), bg="white", fg="#AAAAAA").pack(anchor="e")
+        ctk.CTkLabel(self.tab_todo, text="(형식: 2026-07-03 12:30)", font=("Malgun Gothic", 11), text_color="#AAAAAA").pack(anchor="e")
         
-        add_btn = tk.Button(self.tab_todo, text="💖 추가하기 💖", bg=self.todo_color, fg="white", font=("Malgun Gothic", 11, "bold"), 
-                            relief="flat", cursor="hand2", command=self.add_task)
-        add_btn.pack(fill="x", pady=10, ipady=5)
+        add_btn = ctk.CTkButton(self.tab_todo, text="💖 추가하기 💖", font=self.font_bold, fg_color="#FFB6C1", hover_color="#FF69B4", text_color="white", corner_radius=20, height=45, command=self.add_task)
+        add_btn.pack(fill="x", pady=10)
         
-        tk.Label(self.tab_todo, text="🌟 기다리는 중인 할 일", font=self.font_main, bg="white", fg=self.text_color).pack(anchor="w", pady=(10,0))
-        self.task_listbox = tk.Listbox(self.tab_todo, font=self.font_main, height=8, bg="#FFF0F5", fg=self.text_color, relief="flat")
-        self.task_listbox.pack(fill="both", expand=True, pady=5)
+        ctk.CTkLabel(self.tab_todo, text="🌟 기다리는 중인 할 일", font=self.font_bold, text_color="#FF69B4").pack(anchor="w", pady=(10,5))
         
-        btn_todo_frame = tk.Frame(self.tab_todo, bg="white")
-        btn_todo_frame.pack(fill="x", pady=5)
-
-        comp_btn = tk.Button(btn_todo_frame, text="✓ 완료 토글", bg="white", fg="#32CD32", font=("Malgun Gothic", 9, "bold"), 
-                            relief="solid", bd=1, cursor="hand2", command=self.toggle_task)
-        comp_btn.pack(side="left", fill="x", expand=True, padx=(0, 2))
-
-        del_btn = tk.Button(btn_todo_frame, text="✖ 선택 지우기", bg="white", fg="#FF69B4", font=("Malgun Gothic", 9, "bold"), 
-                            relief="solid", bd=1, cursor="hand2", command=self.delete_task)
-        del_btn.pack(side="left", fill="x", expand=True, padx=(2, 0))
+        # 예쁜 스크롤 리스트 (웹 버전 느낌!)
+        self.task_scroll = ctk.CTkScrollableFrame(self.tab_todo, fg_color="white", border_color="#FFC0CB", border_width=2, corner_radius=10)
+        self.task_scroll.pack(fill="both", expand=True, pady=5)
 
     def setup_account_tab(self):
-        tk.Label(self.tab_account, text="🌐 사이트 이름", font=self.font_main, bg="white", fg=self.text_color).pack(anchor="w")
-        self.site_entry = tk.Entry(self.tab_account, font=self.font_main, relief="solid", bd=1)
-        self.site_entry.pack(fill="x", pady=(2, 10), ipady=3)
+        input_frame = ctk.CTkFrame(self.tab_account, fg_color="transparent")
+        input_frame.pack(fill="x", pady=5)
 
-        tk.Label(self.tab_account, text="👤 아이디", font=self.font_main, bg="white", fg=self.text_color).pack(anchor="w")
-        self.id_entry = tk.Entry(self.tab_account, font=self.font_main, relief="solid", bd=1)
-        self.id_entry.pack(fill="x", pady=(2, 10), ipady=3)
+        self.site_entry = ctk.CTkEntry(input_frame, placeholder_text="🌐 사이트 이름", font=self.font_main, fg_color="white", border_color="#D8BFD8", text_color="#555", corner_radius=10, height=38)
+        self.site_entry.pack(fill="x", pady=4)
 
-        tk.Label(self.tab_account, text="🔑 비밀번호", font=self.font_main, bg="white", fg=self.text_color).pack(anchor="w")
-        self.pw_entry = tk.Entry(self.tab_account, font=self.font_main, show="*", relief="solid", bd=1)
-        self.pw_entry.pack(fill="x", pady=(2, 10), ipady=3)
+        self.id_entry = ctk.CTkEntry(input_frame, placeholder_text="👤 아이디", font=self.font_main, fg_color="white", border_color="#D8BFD8", text_color="#555", corner_radius=10, height=38)
+        self.id_entry.pack(fill="x", pady=4)
 
-        add_btn = tk.Button(self.tab_account, text="🔒 비밀 저장하기 🔒", bg=self.acc_color, fg="white", font=("Malgun Gothic", 11, "bold"), 
-                            relief="flat", cursor="hand2", command=self.add_account)
-        add_btn.pack(fill="x", pady=5, ipady=5)
+        self.pw_entry = ctk.CTkEntry(input_frame, placeholder_text="🔑 비밀번호", show="*", font=self.font_main, fg_color="white", border_color="#D8BFD8", text_color="#555", corner_radius=10, height=38)
+        self.pw_entry.pack(fill="x", pady=4)
 
-        header_frame = tk.Frame(self.tab_account, bg="white")
-        header_frame.pack(fill="x", pady=(10, 0))
-        tk.Label(header_frame, text="📚 나의 비밀 수첩", font=self.font_main, bg="white", fg=self.text_color).pack(side="left")
-        
-        self.search_entry = tk.Entry(header_frame, font=("Malgun Gothic", 10), relief="solid", bd=1, width=12)
-        self.search_entry.pack(side="right", ipady=2)
-        self.search_entry.insert(0, "🔍 검색")
-        self.search_entry.bind("<FocusIn>", lambda e: self.search_entry.delete(0, tk.END) if self.search_entry.get() == "🔍 검색" else None)
-        self.search_entry.bind("<FocusOut>", lambda e: self.search_entry.insert(0, "🔍 검색") if not self.search_entry.get() else None)
-        self.search_entry.bind("<KeyRelease>", self.update_account_tree)
-        
-        columns = ("site", "id", "pw")
-        self.acc_tree = ttk.Treeview(self.tab_account, columns=columns, show="headings", height=5)
-        self.acc_tree.heading("site", text="사이트")
-        self.acc_tree.heading("id", text="아이디")
-        self.acc_tree.heading("pw", text="비밀번호")
-        
-        self.acc_tree.column("site", width=100)
-        self.acc_tree.column("id", width=120)
-        self.acc_tree.column("pw", width=100)
-        self.acc_tree.pack(fill="both", expand=True, pady=5)
+        add_btn = ctk.CTkButton(self.tab_account, text="🔒 비밀 저장하기 🔒", font=self.font_bold, fg_color="#D8BFD8", hover_color="#BA55D3", text_color="white", corner_radius=20, height=45, command=self.add_account)
+        add_btn.pack(fill="x", pady=10)
 
-        btn_frame = tk.Frame(self.tab_account, bg="white")
-        btn_frame.pack(fill="x")
-        
-        del_btn = tk.Button(btn_frame, text="✖ 삭제", bg="white", fg="#9370DB", font=("Malgun Gothic", 9, "bold"), 
-                            relief="solid", bd=1, cursor="hand2", command=self.delete_account)
-        del_btn.pack(side="left", fill="x", expand=True, padx=(0, 2))
+        search_frame = ctk.CTkFrame(self.tab_account, fg_color="transparent")
+        search_frame.pack(fill="x", pady=(10, 5))
 
-        view_btn = tk.Button(btn_frame, text="👀 PW확인", bg="white", fg="#9370DB", font=("Malgun Gothic", 9, "bold"), 
-                             relief="solid", bd=1, cursor="hand2", command=self.toggle_password)
-        view_btn.pack(side="left", fill="x", expand=True, padx=(2, 2))
+        ctk.CTkLabel(search_frame, text="📚 나의 비밀 수첩", font=self.font_bold, text_color="#BA55D3").pack(side="left")
 
-        copy_id_btn = tk.Button(btn_frame, text="📋 ID복사", bg="white", fg="#4682B4", font=("Malgun Gothic", 9, "bold"), 
-                             relief="solid", bd=1, cursor="hand2", command=self.copy_id)
-        copy_id_btn.pack(side="left", fill="x", expand=True, padx=(2, 2))
+        self.search_entry = ctk.CTkEntry(search_frame, placeholder_text="🔍 검색", width=120, height=32, font=self.font_main, fg_color="white", border_color="#D8BFD8", text_color="#555", corner_radius=15)
+        self.search_entry.pack(side="right")
+        self.search_entry.bind("<KeyRelease>", self.update_account_list)
 
-        copy_pw_btn = tk.Button(btn_frame, text="📋 PW복사", bg="white", fg="#4682B4", font=("Malgun Gothic", 9, "bold"), 
-                             relief="solid", bd=1, cursor="hand2", command=self.copy_pw)
-        copy_pw_btn.pack(side="left", fill="x", expand=True, padx=(2, 0))
+        self.acc_scroll = ctk.CTkScrollableFrame(self.tab_account, fg_color="white", border_color="#E6E6FA", border_width=2, corner_radius=10)
+        self.acc_scroll.pack(fill="both", expand=True, pady=5)
 
     def add_task(self):
         task_text = self.task_entry.get().strip()
@@ -206,40 +154,52 @@ class CuteTodoApp:
         except ValueError:
             messagebox.showerror("에러!", "올바른 시간 형식이 아니에요! 💦")
             return
+        
         if due_time <= datetime.datetime.now():
             messagebox.showwarning("시간 이상!", "지금보다 나중 시간으로 설정해 주세요! 🕰️")
             return
             
         self.tasks.append({"task": task_text, "due": due_time, "completed": False, "notified": False, "id": datetime.datetime.now().timestamp()})
         self.save_data()
-        self.update_task_listbox()
-        self.task_entry.delete(0, tk.END)
-        messagebox.showinfo("성공!", f"'{task_text}' (이)가 저장되었어요! ✨")
+        self.update_task_list()
+        self.task_entry.delete(0, 'end')
 
-    def delete_task(self):
-        sel = self.task_listbox.curselection()
-        if not sel: return
-        for index in reversed(sel):
-            del self.tasks[index]
+    def toggle_task(self, task):
+        task["completed"] = not task.get("completed", False)
         self.save_data()
-        self.update_task_listbox()
+        self.update_task_list()
 
-    def toggle_task(self):
-        sel = self.task_listbox.curselection()
-        if not sel: return
-        for index in sel:
-            self.tasks[index]["completed"] = not self.tasks[index]["completed"]
+    def delete_task(self, task):
+        self.tasks.remove(task)
         self.save_data()
-        self.update_task_listbox()
+        self.update_task_list()
 
-    def update_task_listbox(self):
-        self.task_listbox.delete(0, tk.END)
-        for i, t in enumerate(self.tasks):
+    def update_task_list(self):
+        for widget in self.task_scroll.winfo_children():
+            widget.destroy()
+            
+        for t in self.tasks:
+            frame = ctk.CTkFrame(self.task_scroll, fg_color="#FFF0F5", corner_radius=10)
+            frame.pack(fill="x", pady=4, padx=4)
+            
             time_formatted = t["due"].strftime("%y/%m/%d %H:%M")
-            status = "♥" if t.get("completed") else " "
-            self.task_listbox.insert(tk.END, f"[{status}] [{time_formatted}] 🌱 {t['task']}")
-            if t.get("completed"):
-                self.task_listbox.itemconfig(i, {'fg': '#AAAAAA'})
+            is_completed = t.get("completed", False)
+            
+            cb = ctk.CTkCheckBox(frame, text=f"[{time_formatted}] {t['task']}", 
+                                 command=lambda task=t: self.toggle_task(task),
+                                 font=self.font_main, 
+                                 text_color="#AAAAAA" if is_completed else "#555555",
+                                 fg_color="#FF69B4", hover_color="#FF1493", border_color="#FFB6C1",
+                                 corner_radius=5)
+            if is_completed:
+                cb.select()
+            else:
+                cb.deselect()
+                
+            cb.pack(side="left", padx=10, pady=12, fill="x", expand=True)
+            
+            del_btn = ctk.CTkButton(frame, text="✖", width=30, height=30, fg_color="transparent", hover_color="#FFE4E1", text_color="#FF69B4", font=self.font_bold, command=lambda task=t: self.delete_task(task))
+            del_btn.pack(side="right", padx=5)
 
     def add_account(self):
         site = self.site_entry.get().strip()
@@ -252,41 +212,24 @@ class CuteTodoApp:
             
         self.accounts.append({"site": site, "id": uid, "pw": pw, "show": False})
         self.save_data()
-        self.update_account_tree()
+        self.update_account_list()
         
-        self.site_entry.delete(0, tk.END)
-        self.id_entry.delete(0, tk.END)
-        self.pw_entry.delete(0, tk.END)
-        messagebox.showinfo("저장 완료", "비밀 수첩에 저장했어요! 🔒")
+        self.site_entry.delete(0, 'end')
+        self.id_entry.delete(0, 'end')
+        self.pw_entry.delete(0, 'end')
 
-    def delete_account(self):
-        sel = self.acc_tree.selection()
-        if not sel: return
-        for item in reversed(sel):
-            values = self.acc_tree.item(item, 'values')
-            for i, acc in enumerate(self.accounts):
-                if acc["site"] == values[0] and acc["id"] == values[1]:
-                    del self.accounts[i]
-                    break
+    def delete_account(self, acc):
+        self.accounts.remove(acc)
         self.save_data()
-        self.update_account_tree()
+        self.update_account_list()
 
-    def toggle_password(self):
-        sel = self.acc_tree.selection()
-        if not sel: return
-        item = sel[0]
-        values = self.acc_tree.item(item, 'values')
-        
-        for acc in self.accounts:
-            if acc["site"] == values[0] and acc["id"] == values[1]:
-                acc["show"] = not acc["show"]
-                break
-                
-        self.update_account_tree()
+    def toggle_password(self, acc):
+        acc["show"] = not acc.get("show", False)
+        self.update_account_list()
 
-    def update_account_tree(self, event=None):
-        for item in self.acc_tree.get_children():
-            self.acc_tree.delete(item)
+    def update_account_list(self, event=None):
+        for widget in self.acc_scroll.winfo_children():
+            widget.destroy()
             
         search_query = self.search_entry.get().strip().lower()
         if search_query == "🔍 검색":
@@ -294,32 +237,43 @@ class CuteTodoApp:
             
         for acc in self.accounts:
             if search_query in acc["site"].lower():
-                pw_display = acc["pw"] if acc["show"] else "********"
-                self.acc_tree.insert("", "end", values=(acc["site"], acc["id"], pw_display))
+                frame = ctk.CTkFrame(self.acc_scroll, fg_color="#F8F8FF", corner_radius=10, border_color="#E6E6FA", border_width=1)
+                frame.pack(fill="x", pady=5, padx=5)
+                
+                info_frame = ctk.CTkFrame(frame, fg_color="transparent")
+                info_frame.pack(fill="x", padx=10, pady=(10, 5))
+                
+                site_label = ctk.CTkLabel(info_frame, text=acc["site"], font=self.font_bold, text_color="#8A2BE2")
+                site_label.pack(side="left")
+                
+                pw_display = acc["pw"] if acc.get("show") else "********"
+                id_pw_label = ctk.CTkLabel(info_frame, text=f"ID: {acc['id']}  |  PW: {pw_display}", font=self.font_main, text_color="#777")
+                id_pw_label.pack(side="right")
+                
+                btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+                btn_frame.pack(fill="x", padx=10, pady=(0,10))
+                
+                del_btn = ctk.CTkButton(btn_frame, text="✖ 삭제", width=50, height=26, fg_color="#FFB6C1", hover_color="#FF69B4", text_color="white", font=("Malgun Gothic", 11, "bold"), corner_radius=8, command=lambda a=acc: self.delete_account(a))
+                del_btn.pack(side="left", padx=(0,5))
+                
+                view_btn = ctk.CTkButton(btn_frame, text="👀 PW확인", width=60, height=26, fg_color="#D8BFD8", hover_color="#BA55D3", text_color="white", font=("Malgun Gothic", 11, "bold"), corner_radius=8, command=lambda a=acc: self.toggle_password(a))
+                view_btn.pack(side="left", padx=5)
+                
+                copy_id_btn = ctk.CTkButton(btn_frame, text="📋 ID복사", width=60, height=26, fg_color="#B0C4DE", hover_color="#4682B4", text_color="white", font=("Malgun Gothic", 11, "bold"), corner_radius=8, command=lambda a=acc: self.copy_id(a))
+                copy_id_btn.pack(side="right", padx=(5,0))
+                
+                copy_pw_btn = ctk.CTkButton(btn_frame, text="📋 PW복사", width=60, height=26, fg_color="#B0C4DE", hover_color="#4682B4", text_color="white", font=("Malgun Gothic", 11, "bold"), corner_radius=8, command=lambda a=acc: self.copy_pw(a))
+                copy_pw_btn.pack(side="right", padx=5)
 
-    def copy_id(self):
-        sel = self.acc_tree.selection()
-        if not sel: return
-        item = sel[0]
-        values = self.acc_tree.item(item, 'values')
-        uid = values[1]
-        self.root.clipboard_clear()
-        self.root.clipboard_append(uid)
+    def copy_id(self, acc):
+        self.clipboard_clear()
+        self.clipboard_append(acc["id"])
         messagebox.showinfo("복사 완료", "아이디가 클립보드에 복사되었습니다! 📋")
 
-    def copy_pw(self):
-        sel = self.acc_tree.selection()
-        if not sel: return
-        item = sel[0]
-        values = self.acc_tree.item(item, 'values')
-        site_name = values[0]
-        uid = values[1]
-        for acc in self.accounts:
-            if acc["site"] == site_name and acc["id"] == uid:
-                self.root.clipboard_clear()
-                self.root.clipboard_append(acc["pw"])
-                messagebox.showinfo("복사 완료", "비밀번호가 클립보드에 복사되었습니다! 📋")
-                break
+    def copy_pw(self, acc):
+        self.clipboard_clear()
+        self.clipboard_append(acc["pw"])
+        messagebox.showinfo("복사 완료", "비밀번호가 클립보드에 복사되었습니다! 📋")
 
     def check_alarms(self):
         now = datetime.datetime.now()
@@ -332,10 +286,9 @@ class CuteTodoApp:
         
         if needs_update:
             self.save_data()
-            self.update_task_listbox()
-        self.root.after(1000, self.check_alarms)
+            self.update_task_list()
+        self.after(1000, self.check_alarms)
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = CuteTodoApp(root)
-    root.mainloop()
+    app = CuteTodoApp()
+    app.mainloop()
