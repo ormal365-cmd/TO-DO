@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎀 큐트 투두 & 비밀수첩</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+        body {
+            font-family: 'Nunito', 'Noto Sans KR', sans-serif;
+            background-color: #FFF0F5;
+        }
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .strikethrough {
+            text-decoration: line-through;
+            color: #ccc;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-md rounded-[2rem] shadow-xl overflow-hidden border-4 border-pink-100 flex flex-col h-[750px] pop-in relative">
+        
+        <!-- 상단 구글 로그인 & 연동 상태 -->
+        <div class="absolute top-3 right-4 flex items-center gap-2 z-10 bg-white/80 px-2 py-1 rounded-full backdrop-blur-sm shadow-sm">
+            <div id="syncStatus" class="text-xs font-bold text-gray-400 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-gray-400" id="syncDot"></span>
+                내 PC에만 저장됨
+            </div>
+            <button id="googleLoginBtn" onclick="loginWithGoogle()" class="text-xs bg-white border border-gray-200 shadow-sm px-2 py-1 rounded-full text-gray-600 font-bold hover:bg-gray-50 transition-colors flex items-center">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-3 h-3 mr-1" alt="google"> 구글 연동
+            </button>
+            <button id="logoutBtn" onclick="logoutGoogle()" class="hidden text-xs bg-gray-100 border border-gray-200 px-2 py-1 rounded-full text-gray-500 font-bold hover:bg-gray-200">
+                로그아웃
+            </button>
+        </div>
+
+        <!-- 탭 버튼 영역 -->
+        <div class="flex bg-pink-50 p-2 gap-2 mt-12">
+            <button id="tabBtn-todo" onclick="switchTab('todo')" class="flex-1 py-3 rounded-2xl font-bold transition-all text-white bg-pink-400 shadow-md transform scale-100">
+                🐰 할 일
+            </button>
+            <button id="tabBtn-account" onclick="switchTab('account')" class="flex-1 py-3 rounded-2xl font-bold transition-all text-pink-400 bg-transparent hover:bg-pink-100">
+                🔐 비밀 수첩
+            </button>
+        </div>
+
+        <div class="p-6 flex-1 overflow-y-auto bg-[#FFF0F5]/30" id="mainScrollArea">
+            <!-- 1. 할 일 탭 -->
+            <div id="tab-todo" class="block space-y-5">
+                <div>
+                    <label class="block text-pink-500 font-bold mb-2">✨ 무엇을 할까요?</label>
+                    <input type="text" id="taskInput" class="w-full px-4 py-3 rounded-xl border-2 border-pink-200 focus:outline-none focus:border-pink-400 focus:ring-2 ring-pink-100 transition-all bg-white" placeholder="할 일을 적어주세요!">
+                </div>
+                <div>
+                    <label class="block text-pink-500 font-bold mb-2">⏰ 언제 알려줄까요?</label>
+                    <input type="datetime-local" id="timeInput" class="w-full px-4 py-3 rounded-xl border-2 border-pink-200 focus:outline-none focus:border-pink-400 focus:ring-2 ring-pink-100 transition-all bg-white">
+                </div>
+                <button onclick="addTask()" class="w-full py-3 bg-pink-300 hover:bg-pink-400 text-white font-bold rounded-xl shadow-sm transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                    💖 추가하기 💖
+                </button>
+
+                <div class="mt-6">
+                    <h3 class="text-pink-500 font-bold mb-3">🌟 기다리는 중인 할 일</h3>
+                    <div id="taskList" class="space-y-3">
+                        <div class="text-center py-6 text-pink-300 font-bold bg-white rounded-xl border border-pink-100">아직 등록된 할 일이 없어요! 🐰</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 비밀 수첩 탭 -->
+            <div id="tab-account" class="hidden space-y-4">
+                <div class="bg-purple-50 p-4 rounded-2xl space-y-3 border-2 border-purple-100 transition-all duration-300" id="accountInputArea">
+                    <input type="text" id="siteInput" class="w-full px-4 py-2 rounded-xl border border-purple-200 focus:outline-none focus:border-purple-400 bg-white" placeholder="🌐 사이트 이름">
+                    <input type="text" id="idInput" class="w-full px-4 py-2 rounded-xl border border-purple-200 focus:outline-none focus:border-purple-400 bg-white" placeholder="👤 아이디">
+                    <input type="password" id="pwInput" class="w-full px-4 py-2 rounded-xl border border-purple-200 focus:outline-none focus:border-purple-400 bg-white" placeholder="🔑 비밀번호">
+                    
+                    <div class="flex gap-2">
+                        <button id="addAccBtn" onclick="addAccount()" class="flex-1 py-2 bg-purple-300 hover:bg-purple-400 text-white font-bold rounded-xl transition-all shadow-sm transform hover:scale-[1.02] active:scale-[0.98]">
+                            🔒 비밀 저장하기 🔒
+                        </button>
+                        <button id="cancelEditBtn" onclick="cancelEdit()" class="hidden px-4 py-2 bg-gray-300 hover:bg-gray-400 text-white font-bold rounded-xl transition-all shadow-sm transform hover:scale-[1.02] active:scale-[0.98]">
+                            취소
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-purple-500 font-bold">📚 나의 비밀 수첩</h3>
+                        <input type="text" id="searchInput" onkeyup="renderAccounts()" class="w-32 px-3 py-1 text-sm rounded-full border border-purple-200 focus:outline-none focus:border-purple-400 bg-white" placeholder="🔍 사이트 검색">
+                    </div>
+                    <div id="accountList" class="space-y-3">
+                        <div class="text-center py-6 text-purple-300 font-bold bg-white rounded-xl border border-purple-100">저장된 비밀이 없어요! 🤫</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 커스텀 알림 모달 -->
+    <div id="customModal" class="fixed inset-0 bg-pink-900/30 backdrop-blur-sm hidden flex items-center justify-center z-50 px-4 transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center transform scale-95 pop-in">
+            <div class="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <span class="text-3xl">⏰</span>
+            </div>
+            <p id="modalMessage" class="text-lg font-bold text-gray-700 mb-6 whitespace-pre-line break-keep"></p>
+            <button onclick="closeModal()" class="w-full bg-pink-400 text-white py-3 rounded-xl font-bold hover:bg-pink-500 transition-colors shadow-sm">
+                확인
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = 'cute-todo-app';
+        
+        // 👇 파이어베이스 설정: 가이드 문서를 보고 발급받은 '열쇠'를 아래에 덮어써주세요! 👇
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmno-w_qs5wlTM58y7x_zCQU2hjnlHdkM",
+            authDomain: "cute-todo-app-65054.firebaseapp.com",
+            projectId: "cute-todo-app-65054",
+            storageBucket: "cute-todo-app-65054.firebasestorage.app",
+            messagingSenderId: "323001649797",
+            appId: "1:323001649797:web:aa34d1883c313cf10f37ec"
+        };
+        // 👆 여기까지 👆
+        
+        let app, db, auth, userId;
+        let tasks = [];
+        let accounts = [];
+        let isCloudMode = false;
+        let unsubTasks = null;
+        let unsubAccs = null;
+        let editingAccountId = null;
+
+        if ("Notification" in window) Notification.requestPermission();
+
+        window.loadLocalData = () => {
+            const savedTasks = localStorage.getItem('cuteTasks');
+            if (savedTasks) tasks = JSON.parse(savedTasks);
+            
+            const savedAccs = localStorage.getItem('cuteAccounts');
+            if (savedAccs) accounts = JSON.parse(savedAccs);
+            
+            const now = new Date().getTime();
+            tasks = tasks.filter(t => (now - t.createdAt) <= (24 * 60 * 60 * 1000));
+            
+            window.renderTasks();
+            window.renderAccounts();
+        };
+
+        window.saveLocalData = () => {
+            if (isCloudMode) return;
+            localStorage.setItem('cuteTasks', JSON.stringify(tasks));
+            localStorage.setItem('cuteAccounts', JSON.stringify(accounts));
+        };
+
+        try {
+            if(firebaseConfig.projectId !== "dummy-project" && firebaseConfig.apiKey !== "여기에_복사한_API_KEY_붙여넣기") {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            }
+        } catch(e) { console.error("Firebase 초기화 에러", e); }
+
+        let audioCtx = null;
+        function unlockAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        let alertInterval = null;
+        window.playAlertSound = () => {
+            if (!audioCtx) return;
+            const playBeep = () => {
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+                    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+                    osc.start(audioCtx.currentTime);
+                    osc.stop(audioCtx.currentTime + 0.5);
+                } catch(e) {}
+            };
+            playBeep();
+            if(!alertInterval) alertInterval = setInterval(playBeep, 2000); 
+        };
+
+        window.stopAlertSound = () => {
+            if(alertInterval) {
+                clearInterval(alertInterval);
+                alertInterval = null;
+            }
+        };
+
+        let blinkInterval = null;
+        window.startTabBlinking = (text) => {
+            if(blinkInterval) clearInterval(blinkInterval);
+            let show = true;
+            blinkInterval = setInterval(() => {
+                document.title = show ? `⏰ ${text}` : "🎀 큐트 투두 & 비밀수첩";
+                show = !show;
+            }, 500);
+        };
+
+        window.stopTabBlinking = () => {
+            if(blinkInterval) clearInterval(blinkInterval);
+            document.title = "🎀 큐트 투두 & 비밀수첩";
+        };
+
+        window.loginWithGoogle = async () => {
+            if(!auth) return window.showModal("우측 가이드 문서를 보고\n'열쇠'를 먼저 등록해 주세요! 🔑");
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch(e) { 
+                console.error("로그인 에러:", e);
+                window.showModal(`로그인 실패 😢\n\n${e.message}`); 
+            }
+        };
+
+        window.logoutGoogle = () => { if(auth) signOut(auth); };
+
+        if(auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    isCloudMode = true;
+                    document.getElementById('syncDot').classList.replace('bg-gray-400', 'bg-green-400');
+                    document.getElementById('syncStatus').innerHTML = `<span class="w-2 h-2 rounded-full bg-green-400"></span> 클라우드 연동 됨`;
+                    document.getElementById('googleLoginBtn').classList.add('hidden');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+
+                    if(unsubTasks) unsubTasks();
+                    if(unsubAccs) unsubAccs();
+
+                    try {
+                        unsubTasks = onSnapshot(collection(db, 'artifacts', appId, 'users', userId, 'tasks'), (snapshot) => {
+                            const now = new Date().getTime();
+                            tasks = [];
+                            snapshot.forEach(docSnap => {
+                                const t = docSnap.data();
+                                if ((now - t.createdAt) > (24 * 60 * 60 * 1000)) deleteDoc(docSnap.ref);
+                                else tasks.push({ id: docSnap.id, ...t });
+                            });
+                            tasks.sort((a, b) => new Date(a.due) - new Date(b.due));
+                            window.renderTasks();
+                        }, (error) => {
+                            console.error("할일 불러오기 에러:", error);
+                        });
+
+                        unsubAccs = onSnapshot(collection(db, 'artifacts', appId, 'users', userId, 'accounts'), (snapshot) => {
+                            accounts = [];
+                            snapshot.forEach(docSnap => accounts.push({ id: docSnap.id, ...docSnap.data() }));
+                            window.renderAccounts();
+                        }, (error) => {
+                            console.error("계정 불러오기 에러:", error);
+                        });
+                    } catch (error) {
+                        console.error("데이터베이스 연결 실패:", error);
+                    }
+
+                } else {
+                    isCloudMode = false;
+                    userId = null;
+                    if(unsubTasks) { unsubTasks(); unsubTasks = null; }
+                    if(unsubAccs) { unsubAccs(); unsubAccs = null; }
+                    
+                    document.getElementById('syncDot').classList.replace('bg-green-400', 'bg-gray-400');
+                    document.getElementById('syncStatus').innerHTML = `<span class="w-2 h-2 rounded-full bg-gray-400"></span> 내 PC에만 저장됨`;
+                    document.getElementById('googleLoginBtn').classList.remove('hidden');
+                    document.getElementById('logoutBtn').classList.add('hidden');
+                    
+                    window.loadLocalData();
+                }
+            });
+        }
+
+        window.switchTab = (tabId) => {
+            unlockAudio();
+            document.getElementById('tab-todo').classList.add('hidden');
+            document.getElementById('tab-account').classList.add('hidden');
+            
+            document.getElementById('tabBtn-todo').className = "flex-1 py-3 rounded-2xl font-bold transition-all text-pink-400 bg-transparent hover:bg-pink-100";
+            document.getElementById('tabBtn-account').className = "flex-1 py-3 rounded-2xl font-bold transition-all text-pink-400 bg-transparent hover:bg-pink-100";
+            
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            const activeBtn = document.getElementById(`tabBtn-${tabId}`);
+            activeBtn.className = `flex-1 py-3 rounded-2xl font-bold transition-all text-white shadow-md transform scale-100 ${tabId === 'todo' ? 'bg-pink-400' : 'bg-purple-400'}`;
+        };
+
+        window.showModal = (msg) => {
+            document.getElementById('modalMessage').textContent = msg;
+            document.getElementById('customModal').classList.remove('hidden');
+        };
+
+        window.closeModal = () => { 
+            document.getElementById('customModal').classList.add('hidden'); 
+            window.stopAlertSound();
+            window.stopTabBlinking();
+            unlockAudio();
+        };
+
+        window.addTask = async () => {
+            unlockAudio();
+            if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+
+            const taskInput = document.getElementById('taskInput');
+            const timeInput = document.getElementById('timeInput');
+            const text = taskInput.value.trim();
+            const timeVal = timeInput.value;
+
+            if(!text) return window.showModal('할 일을 입력해야 해요! 🥺');
+            if(!timeVal) return window.showModal('시간을 설정해 주세요! ⏰');
+            if(new Date(timeVal) <= new Date()) return window.showModal('지금보다 나중 시간으로 설정해 주세요! 🕰️');
+
+            const docId = Date.now().toString();
+            const newTask = { text: text, due: timeVal, completed: false, notified: false, createdAt: Date.now() };
+
+            try {
+                if (isCloudMode && userId) {
+                    await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'tasks', docId), newTask);
+                } else {
+                    newTask.id = docId;
+                    tasks.push(newTask);
+                    tasks.sort((a, b) => new Date(a.due) - new Date(b.due));
+                    window.saveLocalData();
+                    window.renderTasks();
+                }
+                taskInput.value = '';
+            } catch (error) {
+                console.error("할일 저장 에러:", error);
+                window.showModal(`🚨 저장 실패!\n\n파이어베이스 '서랍장(Firestore)' 설정이 안 되어 있거나 규칙이 잠겨있습니다!\n아래 가이드를 확인해 주세요!`);
+            }
+        };
+
+        window.toggleTask = async (id) => {
+            const task = tasks.find(t => t.id === id);
+            if(task) {
+                try {
+                    if (isCloudMode && userId) {
+                        await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'tasks', id), { ...task, completed: !task.completed });
+                    } else {
+                        task.completed = !task.completed;
+                        window.saveLocalData();
+                        window.renderTasks();
+                    }
+                } catch (error) {
+                    console.error("에러:", error);
+                    window.showModal("수정 권한이 없습니다!");
+                }
+            }
+        };
+
+        window.deleteTask = async (id) => {
+            try {
+                if (isCloudMode && userId) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'tasks', id));
+                } else {
+                    tasks = tasks.filter(t => t.id !== id);
+                    window.saveLocalData();
+                    window.renderTasks();
+                }
+            } catch (error) { console.error("삭제 에러:", error); }
+        };
+
+        window.addAccount = async () => {
+            unlockAudio();
+            const site = document.getElementById('siteInput').value.trim();
+            const uid = document.getElementById('idInput').value.trim();
+            const pw = document.getElementById('pwInput').value.trim();
+
+            if(!site || !uid || !pw) return window.showModal('모든 칸을 채워주세요! 📝');
+
+            try {
+                if (editingAccountId) {
+                    // 수정 모드
+                    if (isCloudMode && userId) {
+                        const existingAcc = accounts.find(a => a.id === editingAccountId);
+                        await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'accounts', editingAccountId), { site: site, uid: uid, pw: pw, show: existingAcc ? existingAcc.show : false });
+                    } else {
+                        const acc = accounts.find(a => a.id === editingAccountId);
+                        if(acc) {
+                            acc.site = site; acc.uid = uid; acc.pw = pw;
+                            window.saveLocalData();
+                            window.renderAccounts();
+                        }
+                    }
+                    window.cancelEdit();
+                    window.showModal('✨ 수정 완료되었습니다! ✨');
+                } else {
+                    // 추가 모드
+                    const docId = Date.now().toString();
+                    const newAcc = { site: site, uid: uid, pw: pw, show: false };
+
+                    if (isCloudMode && userId) {
+                        await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'accounts', docId), newAcc);
+                    } else {
+                        newAcc.id = docId;
+                        accounts.push(newAcc);
+                        window.saveLocalData();
+                        window.renderAccounts();
+                    }
+                }
+                
+                document.getElementById('siteInput').value = '';
+                document.getElementById('idInput').value = '';
+                document.getElementById('pwInput').value = '';
+
+            } catch (error) {
+                console.error("비밀번호 저장 에러:", error);
+                window.showModal(`🚨 저장 실패!\n\n파이어베이스 '서랍장(Firestore)' 설정이 안 되어 있거나 규칙(Test 모드)이 만료/잠겨있습니다!\n우측 가이드 3단계를 꼭 확인해 주세요!`);
+            }
+        };
+
+        window.editAccount = (id) => {
+            const acc = accounts.find(a => a.id === id);
+            if(!acc) return;
+            
+            document.getElementById('siteInput').value = acc.site;
+            document.getElementById('idInput').value = acc.uid;
+            document.getElementById('pwInput').value = acc.pw;
+            
+            editingAccountId = id;
+            
+            const btn = document.getElementById('addAccBtn');
+            btn.innerHTML = '✨ 비밀 수정완료 ✨';
+            btn.classList.replace('bg-purple-300', 'bg-green-400');
+            btn.classList.replace('hover:bg-purple-400', 'hover:bg-green-500');
+            
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+            document.getElementById('accountInputArea').classList.replace('bg-purple-50', 'bg-green-50');
+            document.getElementById('accountInputArea').classList.replace('border-purple-100', 'border-green-200');
+
+            document.getElementById('mainScrollArea').scrollTo({top: 0, behavior: 'smooth'});
+        };
+
+        window.cancelEdit = () => {
+            editingAccountId = null;
+            document.getElementById('siteInput').value = '';
+            document.getElementById('idInput').value = '';
+            document.getElementById('pwInput').value = '';
+
+            const btn = document.getElementById('addAccBtn');
+            btn.innerHTML = '🔒 비밀 저장하기 🔒';
+            btn.classList.replace('bg-green-400', 'bg-purple-300');
+            btn.classList.replace('hover:bg-green-500', 'hover:bg-purple-400');
+            
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+            document.getElementById('accountInputArea').classList.replace('bg-green-50', 'bg-purple-50');
+            document.getElementById('accountInputArea').classList.replace('border-green-200', 'border-purple-100');
+        };
+
+        window.deleteAccount = async (id) => {
+            if(editingAccountId === id) window.cancelEdit();
+            try {
+                if (isCloudMode && userId) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'accounts', id));
+                } else {
+                    accounts = accounts.filter(a => a.id !== id);
+                    window.saveLocalData();
+                    window.renderAccounts();
+                }
+            } catch (error) { console.error("삭제 에러:", error); }
+        };
+
+        window.togglePassword = async (id) => {
+            const acc = accounts.find(a => a.id === id);
+            if(acc) {
+                try {
+                    if (isCloudMode && userId) {
+                        await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'accounts', id), { ...acc, show: !acc.show });
+                    } else {
+                        acc.show = !acc.show;
+                        window.saveLocalData();
+                        window.renderAccounts();
+                    }
+                } catch (error) { console.error("비번 확인 에러", error); }
+            }
+        };
+
+        window.copyText = (text, type) => {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                window.showModal(`✨ ${type} 복사 완료! ✨\n원하는 곳에 붙여넣기 하세요!`);
+            } catch (err) {
+                window.showModal('복사 실패 😢');
+            }
+            document.body.removeChild(textarea);
+        };
+
+        window.renderTasks = () => {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            
+            if(tasks.length === 0) {
+                list.innerHTML = '<div class="text-center py-6 text-pink-300 font-bold bg-white rounded-xl border border-pink-100">아직 등록된 할 일이 없어요! 🐰</div>';
+                return;
+            }
+
+            tasks.forEach(task => {
+                const dueObj = new Date(task.due);
+                const timeStr = `${dueObj.getMonth()+1}/${dueObj.getDate()} ${dueObj.getHours()}:${String(dueObj.getMinutes()).padStart(2, '0')}`;
+                
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-3 rounded-xl border ${task.completed ? 'bg-gray-50 border-gray-200' : 'bg-white border-pink-200 shadow-sm'} transition-all pop-in`;
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden cursor-pointer w-full" onclick="toggleTask('${task.id}')">
+                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${task.completed ? 'bg-pink-400 border-pink-400' : 'border-pink-300 bg-white'}">
+                            ${task.completed ? '<span class="text-white text-xs">♥</span>' : ''}
+                        </div>
+                        <div class="flex-1 truncate">
+                            <div class="text-xs ${task.completed ? 'text-gray-400' : 'text-pink-400'} font-bold">${timeStr}</div>
+                            <div class="text-sm font-bold ${task.completed ? 'strikethrough' : 'text-gray-700'} truncate">${task.text}</div>
+                        </div>
+                    </div>
+                    <button onclick="deleteTask('${task.id}')" class="ml-2 text-gray-300 hover:text-pink-400 px-2 py-1 font-bold">✖</button>
+                `;
+                list.appendChild(div);
+            });
+        };
+
+        window.renderAccounts = () => {
+            const list = document.getElementById('accountList');
+            const search = document.getElementById('searchInput')?.value.trim().toLowerCase() || '';
+            list.innerHTML = '';
+
+            const filtered = accounts.filter(a => a.site.toLowerCase().includes(search));
+
+            if(filtered.length === 0) {
+                list.innerHTML = '<div class="text-center py-6 text-purple-300 font-bold bg-white rounded-xl border border-purple-100">저장된 비밀이 없어요! 🤫</div>';
+                return;
+            }
+
+            filtered.forEach(acc => {
+                const div = document.createElement('div');
+                div.className = `p-3 rounded-xl border shadow-sm pop-in space-y-2 transition-all ${editingAccountId === acc.id ? 'bg-green-50 border-green-300' : 'bg-white border-purple-200'}`;
+                
+                const pwDisplay = acc.show ? acc.pw : '********';
+                
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold text-purple-600">${acc.site}</span>
+                        <div>
+                            <button onclick="editAccount('${acc.id}')" class="text-xs text-green-500 hover:text-green-600 font-bold mr-2">수정 ✏️</button>
+                            <button onclick="deleteAccount('${acc.id}')" class="text-xs text-red-300 hover:text-red-500 font-bold">삭제 ✖</button>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded-lg break-all">
+                        ID: <span class="font-bold text-gray-700">${acc.uid}</span><br>
+                        PW: <span class="font-bold text-gray-700">${pwDisplay}</span>
+                    </div>
+                    <div class="flex gap-1 mt-2">
+                        <button onclick="togglePassword('${acc.id}')" class="flex-1 py-1 bg-purple-100 hover:bg-purple-200 text-purple-600 text-xs font-bold rounded-md transition-colors">
+                            👀 PW확인
+                        </button>
+                        <button onclick="copyText('${acc.uid}', '아이디')" class="flex-1 py-1 bg-blue-50 hover:bg-blue-100 text-blue-500 text-xs font-bold rounded-md transition-colors">
+                            📋 ID복사
+                        </button>
+                        <button onclick="copyText('${acc.pw}', '비밀번호')" class="flex-1 py-1 bg-blue-50 hover:bg-blue-100 text-blue-500 text-xs font-bold rounded-md transition-colors">
+                            📋 PW복사
+                        </button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        };
+
+        window.checkAlarms = async () => {
+            const now = new Date();
+            let needsLocalSave = false;
+
+            for (const t of tasks) {
+                const dueTime = new Date(t.due);
+                if (!t.completed && !t.notified && now >= dueTime) {
+                    
+                    window.playAlertSound();
+                    window.startTabBlinking("다 하셨나요?!");
+                    window.switchTab('todo');
+                    window.showModal(`다 하셨나요? ⏰\n\n[ ${t.text} ]`);
+                    
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        new Notification("⏰ 큐트 투두 알림!", {
+                            body: `다 하셨나요?\n[ ${t.text} ]`,
+                            icon: "https://www.svgrepo.com/show/400615/rabbit.svg"
+                        });
+                    }
+
+                    try {
+                        if (isCloudMode && userId) {
+                            await setDoc(doc(db, 'artifacts', appId, 'users', userId, 'tasks', t.id), { ...t, notified: true });
+                        } else {
+                            t.notified = true;
+                            needsLocalSave = true;
+                        }
+                    } catch(e) { console.error(e); }
+                }
+            }
+            if (needsLocalSave) window.saveLocalData();
+        };
+
+        window.onload = () => {
+            setTimeout(() => {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 1);
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('timeInput').value = now.toISOString().slice(0,16);
+                
+                window.loadLocalData();
+                setInterval(window.checkAlarms, 1000);
+            }, 100);
+        };
+    </script>
+</body>
+</html>
