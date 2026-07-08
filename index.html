@@ -122,7 +122,7 @@
                 <input type="text" id="siteInput" placeholder="🌐 사이트 이름" class="w-full bg-white/80 p-3 rounded-xl focus:outline-none focus:ring-2 theme-border font-medium text-gray-700">
                 <input type="text" id="idInput" placeholder="👤 아이디" class="w-full bg-white/80 p-3 rounded-xl focus:outline-none focus:ring-2 theme-border font-medium text-gray-700">
                 <input type="password" id="pwInput" placeholder="🔑 비밀번호" class="w-full bg-white/80 p-3 rounded-xl focus:outline-none focus:ring-2 theme-border font-medium text-gray-700">
-                <button onclick="addAccount()" class="w-full py-3 rounded-xl font-bold theme-bg shadow-md hover:opacity-90 transition-opacity">🔒 비밀 저장하기</button>
+                <button id="accSubmitBtn" onclick="addAccount()" class="w-full py-3 rounded-xl font-bold theme-bg shadow-md hover:opacity-90 transition-opacity">🔒 비밀 저장하기</button>
             </div>
             
             <div id="accountList" class="space-y-3 pb-20 mt-4"></div>
@@ -333,22 +333,39 @@
             }
         }
 
+        let editingAccountId = null; // 수정 중인 계정의 ID를 기억하는 변수
+
         async function addAccount() {
             if (!currentUser) return alert("먼저 구글 연동을 해주세요! 🥺");
             
             const site = document.getElementById('siteInput').value.trim();
             const uid = document.getElementById('idInput').value.trim();
             const pw = document.getElementById('pwInput').value.trim();
+            const btn = document.getElementById('accSubmitBtn');
             
             if (!site || !uid || !pw) return alert("모든 칸을 채워주세요! 📝");
 
             try {
-                await db.collection('users').doc(currentUser.uid).collection('accounts').add({
-                    site: site,
-                    id: uid,
-                    pw: pw,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                if (editingAccountId) {
+                    // 기존 데이터 수정(업데이트)
+                    await db.collection('users').doc(currentUser.uid).collection('accounts').doc(editingAccountId).update({
+                        site: site,
+                        id: uid,
+                        pw: pw
+                    });
+                    editingAccountId = null;
+                    btn.innerText = "✅ 수정 완료!";
+                    setTimeout(() => { btn.innerText = "🔒 비밀 저장하기"; }, 1500); // 1.5초 뒤 원래 버튼으로 복귀
+                } else {
+                    // 새 데이터 추가
+                    await db.collection('users').doc(currentUser.uid).collection('accounts').add({
+                        site: site,
+                        id: uid,
+                        pw: pw,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
                 document.getElementById('siteInput').value = '';
                 document.getElementById('idInput').value = '';
                 document.getElementById('pwInput').value = '';
@@ -379,7 +396,10 @@
                       div.innerHTML = `
                           <div class="flex justify-between items-center border-b border-gray-200/50 pb-2 mb-1">
                               <span class="font-bold theme-text text-lg">${data.site}</span>
-                              <button onclick="deleteAccount('${doc.id}')" class="text-red-400 hover:text-red-600 text-sm font-bold bg-red-50 px-2 py-1 rounded-lg">삭제</button>
+                              <div class="flex gap-1">
+                                  <button onclick="editAccount('${doc.id}', '${data.site.replace(/'/g, "\\'")}', '${data.id.replace(/'/g, "\\'")}', '${data.pw.replace(/'/g, "\\'")}')" class="text-blue-400 hover:text-blue-600 text-sm font-bold bg-blue-50 px-2 py-1 rounded-lg">수정</button>
+                                  <button onclick="deleteAccount('${doc.id}')" class="text-red-400 hover:text-red-600 text-sm font-bold bg-red-50 px-2 py-1 rounded-lg">삭제</button>
+                              </div>
                           </div>
                           <div class="flex justify-between items-center">
                               <span class="text-gray-600 font-medium">ID: ${data.id}</span>
@@ -402,6 +422,22 @@
             if(confirm("이 비밀번호를 삭제할까요?")) {
                 db.collection('users').doc(currentUser.uid).collection('accounts').doc(id).delete();
             }
+        }
+
+        // 수정 버튼을 눌렀을 때 실행되는 함수
+        function editAccount(id, site, uid, pw) {
+            editingAccountId = id; // 수정할 ID 기억하기
+            
+            // 위쪽 입력창에 기존 데이터 채워넣기
+            document.getElementById('siteInput').value = site;
+            document.getElementById('idInput').value = uid;
+            document.getElementById('pwInput').value = pw;
+            
+            // 버튼 모양과 글씨 바꾸기
+            document.getElementById('accSubmitBtn').innerText = "💾 수정 완료하기";
+            
+            // 입력창이 있는 맨 위로 부드럽게 스크롤 올려주기
+            document.getElementById('tab-account').scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function togglePW(btn) {
