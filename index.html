@@ -9,44 +9,44 @@
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap');
         
         :root {
-            /* 기본 (블루) */
-            --bg-start: #d3e4ff;
-            --bg-end: #f4f8ff;
+            /* 기본 (블루) - 사진과 동일한 스포이드 색상 */
+            --grad-start: #e1ebf9;
+            --grad-end: #f4f8ff;
             --primary: #9bbef2;
             --text-main: #6a95d6;
         }
         [data-theme="mint"] {
             /* 메론소다 (민트) */
-            --bg-start: #d4f0df;
-            --bg-end: #f2fbf5;
+            --grad-start: #e0f4e8;
+            --grad-end: #f2fbf5;
             --primary: #94d4b2;
             --text-main: #69af8a;
         }
         [data-theme="pink"] {
             /* 딸기우유 (핑크) */
-            --bg-start: #ffd1da;
-            --bg-end: #fff5f7;
+            --grad-start: #ffebef;
+            --grad-end: #fff5f7;
             --primary: #ffadbc;
             --text-main: #e07489;
         }
         [data-theme="purple"] {
             /* 라벤더 (퍼플) */
-            --bg-start: #e1d8ff;
-            --bg-end: #f7f5ff;
+            --grad-start: #f1edfa;
+            --grad-end: #f7f5ff;
             --primary: #bcaaf2;
             --text-main: #937dc9;
         }
 
         body { 
             font-family: 'Noto Sans KR', 'Nunito', sans-serif; 
-            /* 화면 끝까지 해당 색상의 가장 연한 톤(bg-end)으로 부드럽게 이어집니다! */
-            background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%); 
+            /* 화면 절반이 하얀색이 되는 오류 수정! 스르륵 끝까지 연한 색으로 이어집니다 */
+            background: linear-gradient(180deg, var(--grad-start) 0%, var(--grad-end) 100%);
             background-attachment: fixed; 
             background-size: cover;
             color: #333;
         }
         
-        /* 투명한 유리(글래스모피즘) 효과 */
+        /* 반투명한 유리(글래스모피즘) 효과 */
         .glass { 
             background: rgba(255, 255, 255, 0.45); 
             backdrop-filter: blur(16px); 
@@ -71,13 +71,13 @@
         .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* 테마 스와치 (글씨 없이 영롱한 그라데이션만!) */
+        /* 테마 스와치 (버튼 크기 귀엽게 줄임!) */
         .color-swatch {
             width: 100%;
-            height: 50px;
+            height: 60px; /* 기존보다 훨씬 작고 귀엽게 */
             border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
             transition: transform 0.2s;
         }
         .color-swatch:hover { transform: scale(1.05); }
@@ -90,7 +90,6 @@
         <!-- 상단 헤더 & 로그인/로그아웃 버튼 -->
         <div class="flex justify-between items-center p-6 pb-2">
             <h1 class="text-2xl font-black theme-text tracking-tight">🐰 My Todo</h1>
-            <!-- 클릭 시 toggleLogin 함수 실행으로 변경 -->
             <button id="loginBtn" onclick="toggleLogin()" class="px-4 py-2 bg-white/80 rounded-full font-bold text-sm shadow-sm hover:bg-white transition-colors theme-text">
                 구글 연동
             </button>
@@ -135,23 +134,23 @@
         </button>
     </div>
 
-    <!-- 테마 선택 모달 (4가지 컬러) -->
+    <!-- 테마 선택 모달 (4가지 컬러 - 사진과 동일한 스포이드 색상!) -->
     <div id="themeModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden flex items-center justify-center z-50 transition-opacity p-4">
-        <div class="glass-card p-8 rounded-[2rem] w-full max-w-sm shadow-2xl space-y-6 pop-in">
-            <h2 class="text-xl font-black theme-text text-center">🎨 테마 변경</h2>
+        <div class="glass-card p-6 rounded-[2rem] w-full max-w-sm shadow-2xl space-y-4 pop-in">
+            <h2 class="text-xl font-black theme-text text-center mb-2">🎨 테마 변경</h2>
             
             <div class="grid grid-cols-2 gap-4">
                 <!-- 기본 (Blue) -->
-                <button onclick="setTheme('blue')" class="color-swatch" style="background: linear-gradient(180deg, #d3e4ff 0%, #f4f8ff 100%);"></button>
+                <button onclick="setTheme('blue')" class="color-swatch" style="background: linear-gradient(180deg, #e1ebf9 0%, #f4f8ff 100%);"></button>
                 <!-- 메론소다 (Mint) -->
-                <button onclick="setTheme('mint')" class="color-swatch" style="background: linear-gradient(180deg, #d4f0df 0%, #f2fbf5 100%);"></button>
+                <button onclick="setTheme('mint')" class="color-swatch" style="background: linear-gradient(180deg, #e0f4e8 0%, #f2fbf5 100%);"></button>
                 <!-- 딸기우유 (Pink) -->
-                <button onclick="setTheme('pink')" class="color-swatch" style="background: linear-gradient(180deg, #ffd1da 0%, #fff5f7 100%);"></button>
+                <button onclick="setTheme('pink')" class="color-swatch" style="background: linear-gradient(180deg, #ffebef 0%, #fff5f7 100%);"></button>
                 <!-- 라벤더 (Purple) -->
-                <button onclick="setTheme('purple')" class="color-swatch" style="background: linear-gradient(180deg, #e1d8ff 0%, #f7f5ff 100%);"></button>
+                <button onclick="setTheme('purple')" class="color-swatch" style="background: linear-gradient(180deg, #f1edfa 0%, #f7f5ff 100%);"></button>
             </div>
 
-            <button onclick="document.getElementById('themeModal').classList.add('hidden')" class="w-full py-3 bg-white hover:bg-gray-50 transition-colors rounded-xl font-bold text-gray-500 border border-gray-200 shadow-sm">
+            <button onclick="document.getElementById('themeModal').classList.add('hidden')" class="w-full py-3 mt-2 bg-white hover:bg-gray-50 transition-colors rounded-xl font-bold text-gray-500 border border-gray-200 shadow-sm">
                 닫기
             </button>
         </div>
@@ -219,10 +218,9 @@
             }
         }
 
-        // 🔐 로그인/로그아웃 전환 함수 (새로 추가됨!)
+        // 🔐 로그아웃 기능 포함!
         function toggleLogin() {
             if (currentUser) {
-                // 이미 로그인된 상태면 로그아웃 실행
                 if(confirm("로그아웃 하시겠습니까?")) {
                     auth.signOut().then(() => {
                         alert("로그아웃 되었습니다!");
@@ -231,7 +229,6 @@
                     });
                 }
             } else {
-                // 로그인 안 된 상태면 로그인 창 띄우기
                 if(firebaseConfig.apiKey === "여기에_복사한_API_KEY_붙여넣기") {
                     alert("앗! 코드 안쪽에 파이어베이스 진짜 '열쇠(Config)'를 덮어써주셔야 해요!");
                     return;
@@ -282,11 +279,11 @@
             }
         }
 
+        // 🚨 정렬 조건(orderBy) 제거! 이제 숨은 데이터까지 무조건 다 가져옵니다!
         function loadTasks() {
             if (!currentUser) return;
             
             db.collection('users').doc(currentUser.uid).collection('tasks')
-              .orderBy('due', 'asc')
               .onSnapshot((snapshot) => {
                   const list = document.getElementById('taskList');
                   list.innerHTML = '';
@@ -301,8 +298,13 @@
                       const div = document.createElement('div');
                       div.className = "glass-card p-4 rounded-xl flex items-center justify-between";
                       
-                      const dateObj = new Date(data.due);
-                      const timeStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
+                      let timeStr = "시간 없음";
+                      if(data.due) {
+                          const dateObj = new Date(data.due);
+                          if(!isNaN(dateObj)) {
+                              timeStr = `${dateObj.getMonth()+1}/${dateObj.getDate()} ${String(dateObj.getHours()).padStart(2,'0')}:${String(dateObj.getMinutes()).padStart(2,'0')}`;
+                          }
+                      }
 
                       div.innerHTML = `
                           <div class="flex items-center gap-3 overflow-hidden">
@@ -355,11 +357,11 @@
             }
         }
 
+        // 🚨 비밀수첩 정렬 조건(orderBy) 제거! 숨은 비밀번호 강제 소환!
         function loadAccounts() {
             if (!currentUser) return;
             
             db.collection('users').doc(currentUser.uid).collection('accounts')
-              .orderBy('createdAt', 'desc')
               .onSnapshot((snapshot) => {
                   const list = document.getElementById('accountList');
                   list.innerHTML = '';
