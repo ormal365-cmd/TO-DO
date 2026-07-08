@@ -8,42 +8,38 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Noto+Sans+KR:wght@400;700&display=swap');
         
-        /* 
-           🎨 Todoary 스타일의 맑고 우유빛 도는 파스텔 그라데이션 완벽 재현!
-           하얀색(#FFF)으로 끊기지 않고, 해당 색상의 아주 연한 톤으로 자연스럽게 이어집니다.
-        */
         :root {
             /* 기본 (블루) */
-            --bg-start: #cce0fb; 
-            --bg-end: #ebf3fe; 
-            --primary: #8ab6f4;
-            --text-main: #4a7ab5;
+            --bg-start: #d3e4ff;
+            --bg-end: #f4f8ff;
+            --primary: #9bbef2;
+            --text-main: #6a95d6;
         }
         [data-theme="mint"] {
             /* 메론소다 (민트) */
-            --bg-start: #ccebda; 
-            --bg-end: #eaf5ee; 
-            --primary: #7dce9e;
-            --text-main: #4a9466;
+            --bg-start: #d4f0df;
+            --bg-end: #f2fbf5;
+            --primary: #94d4b2;
+            --text-main: #69af8a;
         }
         [data-theme="pink"] {
             /* 딸기우유 (핑크) */
-            --bg-start: #ffc0cb; 
-            --bg-end: #ffe6ea; 
-            --primary: #ff8ba7;
-            --text-main: #d15676;
+            --bg-start: #ffd1da;
+            --bg-end: #fff5f7;
+            --primary: #ffadbc;
+            --text-main: #e07489;
         }
         [data-theme="purple"] {
             /* 라벤더 (퍼플) */
-            --bg-start: #d6ccfa; 
-            --bg-end: #f2effe; 
-            --primary: #a794f0;
-            --text-main: #7660c4;
+            --bg-start: #e1d8ff;
+            --bg-end: #f7f5ff;
+            --primary: #bcaaf2;
+            --text-main: #937dc9;
         }
 
         body { 
             font-family: 'Noto Sans KR', 'Nunito', sans-serif; 
-            /* 화면 끝까지 부드럽게 이어지는 그라데이션 */
+            /* 화면 끝까지 해당 색상의 가장 연한 톤(bg-end)으로 부드럽게 이어집니다! */
             background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%); 
             background-attachment: fixed; 
             background-size: cover;
@@ -68,7 +64,6 @@
         .theme-bg { background-color: var(--primary); color: white; }
         .theme-border { border-color: var(--primary); }
 
-        /* 커스텀 스크롤바 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.8); border-radius: 10px; }
@@ -76,13 +71,13 @@
         .pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes popIn { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* 테마 선택 버튼 (크기를 아담하고 귀엽게 축소!) */
+        /* 테마 스와치 (글씨 없이 영롱한 그라데이션만!) */
         .color-swatch {
             width: 100%;
-            height: 50px; /* 기존 80px에서 50px로 확 줄였습니다! */
-            border-radius: 12px; /* 크기에 맞춰 모서리 둥글기도 예쁘게 조절 */
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            height: 50px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             transition: transform 0.2s;
         }
         .color-swatch:hover { transform: scale(1.05); }
@@ -92,15 +87,15 @@
 
     <div class="glass w-full max-w-md rounded-[2.5rem] flex flex-col h-[750px] max-h-[90vh] pop-in relative overflow-hidden">
         
-        <!-- 상단 헤더 & 로그인 버튼 -->
+        <!-- 상단 헤더 & 로그인/로그아웃 버튼 -->
         <div class="flex justify-between items-center p-6 pb-2">
             <h1 class="text-2xl font-black theme-text tracking-tight">🐰 My Todo</h1>
-            <button id="loginBtn" onclick="loginWithGoogle()" class="px-4 py-2 bg-white/80 rounded-full font-bold text-sm shadow-sm hover:bg-white transition-colors theme-text">
+            <!-- 클릭 시 toggleLogin 함수 실행으로 변경 -->
+            <button id="loginBtn" onclick="toggleLogin()" class="px-4 py-2 bg-white/80 rounded-full font-bold text-sm shadow-sm hover:bg-white transition-colors theme-text">
                 구글 연동
             </button>
         </div>
 
-        <!-- 탭 영역 -->
         <div class="flex px-6 py-2 gap-3 relative z-10">
             <button id="tab-todo-btn" onclick="switchTab('todo')" class="flex-1 py-3 rounded-2xl font-bold bg-white shadow-sm border-2 theme-border theme-text transition-all">할 일</button>
             <button id="tab-acc-btn" onclick="switchTab('account')" class="flex-1 py-3 rounded-2xl font-bold bg-white/40 text-gray-400 border-2 border-transparent transition-all">비밀 수첩</button>
@@ -140,20 +135,20 @@
         </button>
     </div>
 
-    <!-- 테마 선택 모달 (글씨 없이 4가지 색상만!) -->
+    <!-- 테마 선택 모달 (4가지 컬러) -->
     <div id="themeModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm hidden flex items-center justify-center z-50 transition-opacity p-4">
         <div class="glass-card p-8 rounded-[2rem] w-full max-w-sm shadow-2xl space-y-6 pop-in">
             <h2 class="text-xl font-black theme-text text-center">🎨 테마 변경</h2>
             
             <div class="grid grid-cols-2 gap-4">
                 <!-- 기본 (Blue) -->
-                <button onclick="setTheme('blue')" class="color-swatch" style="background: linear-gradient(180deg, #cce0fb 0%, #ebf3fe 100%);"></button>
+                <button onclick="setTheme('blue')" class="color-swatch" style="background: linear-gradient(180deg, #d3e4ff 0%, #f4f8ff 100%);"></button>
                 <!-- 메론소다 (Mint) -->
-                <button onclick="setTheme('mint')" class="color-swatch" style="background: linear-gradient(180deg, #ccebda 0%, #eaf5ee 100%);"></button>
+                <button onclick="setTheme('mint')" class="color-swatch" style="background: linear-gradient(180deg, #d4f0df 0%, #f2fbf5 100%);"></button>
                 <!-- 딸기우유 (Pink) -->
-                <button onclick="setTheme('pink')" class="color-swatch" style="background: linear-gradient(180deg, #ffc0cb 0%, #ffe6ea 100%);"></button>
+                <button onclick="setTheme('pink')" class="color-swatch" style="background: linear-gradient(180deg, #ffd1da 0%, #fff5f7 100%);"></button>
                 <!-- 라벤더 (Purple) -->
-                <button onclick="setTheme('purple')" class="color-swatch" style="background: linear-gradient(180deg, #d6ccfa 0%, #f2effe 100%);"></button>
+                <button onclick="setTheme('purple')" class="color-swatch" style="background: linear-gradient(180deg, #e1d8ff 0%, #f7f5ff 100%);"></button>
             </div>
 
             <button onclick="document.getElementById('themeModal').classList.add('hidden')" class="w-full py-3 bg-white hover:bg-gray-50 transition-colors rounded-xl font-bold text-gray-500 border border-gray-200 shadow-sm">
@@ -162,13 +157,12 @@
         </div>
     </div>
 
-    <!-- 구글 파이어베이스 (Firebase) 불러오기 -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <script>
-        // 🚨 [매우 중요] 여기에 발급받으신 진짜 API KEY 코드를 다시 덮어써주세요!
+        // 🚨 여기에 발급받으신 진짜 API KEY 코드를 다시 덮어써주세요! 🚨
         const firebaseConfig = {
             apiKey: "AIzaSyAmno-w_qs5wlTM58y7x_zCQU2hjnlHdkM",
             authDomain: "cute-todo-app-65054.firebaseapp.com",
@@ -178,7 +172,6 @@
             appId: "1:323001649797:web:aa34d1883c313cf10f37ec"
         };
 
-        // Firebase 시작!
         let app, auth, db;
         try {
             app = firebase.initializeApp(firebaseConfig);
@@ -190,26 +183,21 @@
 
         let currentUser = null;
 
-        // 🎨 테마 설정 함수
         function setTheme(theme) {
             document.documentElement.setAttribute('data-theme', theme);
             document.getElementById('themeModal').classList.add('hidden');
-            // 로컬 스토리지에 테마 저장 (새로고침해도 유지)
             localStorage.setItem('cuteTodoTheme', theme);
         }
 
-        // 초기 테마 불러오기
         window.onload = () => {
             const savedTheme = localStorage.getItem('cuteTodoTheme');
             if(savedTheme) setTheme(savedTheme);
             
-            // 날짜 기본값 설정
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('timeInput').value = now.toISOString().slice(0,16);
         };
 
-        // 탭 전환 함수
         function switchTab(tab) {
             const todoTab = document.getElementById('tab-todo');
             const accTab = document.getElementById('tab-account');
@@ -231,25 +219,35 @@
             }
         }
 
-        // 🔐 구글 로그인 함수
-        function loginWithGoogle() {
-            if(firebaseConfig.apiKey === "여기에_복사한_API_KEY_붙여넣기") {
-                alert("앗! 코드 안쪽에 파이어베이스 진짜 '열쇠(Config)'를 덮어써주셔야 해요!");
-                return;
+        // 🔐 로그인/로그아웃 전환 함수 (새로 추가됨!)
+        function toggleLogin() {
+            if (currentUser) {
+                // 이미 로그인된 상태면 로그아웃 실행
+                if(confirm("로그아웃 하시겠습니까?")) {
+                    auth.signOut().then(() => {
+                        alert("로그아웃 되었습니다!");
+                    }).catch((error) => {
+                        alert("로그아웃 에러: " + error.message);
+                    });
+                }
+            } else {
+                // 로그인 안 된 상태면 로그인 창 띄우기
+                if(firebaseConfig.apiKey === "여기에_복사한_API_KEY_붙여넣기") {
+                    alert("앗! 코드 안쪽에 파이어베이스 진짜 '열쇠(Config)'를 덮어써주셔야 해요!");
+                    return;
+                }
+                const provider = new firebase.auth.GoogleAuthProvider();
+                auth.signInWithPopup(provider).catch((error) => {
+                    alert(`로그인 에러: ${error.message}`);
+                });
             }
-            
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch((error) => {
-                alert(`로그인 에러: ${error.message}`);
-            });
         }
 
-        // 로그인 상태 감지
         if(auth) {
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     currentUser = user;
-                    document.getElementById('loginBtn').innerText = user.displayName + "님 🐰";
+                    document.getElementById('loginBtn').innerText = user.displayName + "님 🐰 (로그아웃)";
                     document.getElementById('loginBtn').classList.add('bg-green-100', 'text-green-700');
                     loadTasks();
                     loadAccounts();
@@ -263,7 +261,6 @@
             });
         }
 
-        // 🐰 할 일 추가
         async function addTask() {
             if (!currentUser) return alert("먼저 우측 상단에서 구글 연동을 해주세요! 🥺");
             
@@ -285,7 +282,6 @@
             }
         }
 
-        // 🐰 할 일 불러오기 (실시간)
         function loadTasks() {
             if (!currentUser) return;
             
@@ -335,7 +331,6 @@
             }
         }
 
-        // 🔒 비밀 수첩 추가
         async function addAccount() {
             if (!currentUser) return alert("먼저 구글 연동을 해주세요! 🥺");
             
@@ -360,7 +355,6 @@
             }
         }
 
-        // 🔒 비밀 수첩 불러오기
         function loadAccounts() {
             if (!currentUser) return;
             
